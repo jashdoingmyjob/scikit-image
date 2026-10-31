@@ -22,9 +22,9 @@ jobs:
         env:
           CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-          PR_NUMBER: ${{ github.event.pull_request.number || 1 }}
-          PR_TITLE: ${{ github.event.pull_request.title || 'ACME-142: Add high_boost_filter' }}
-          PR_BODY: ${{ github.event.pull_request.body || '' }}
+          PR_NUMBER: "${{ github.event.pull_request.number || 1 }}"
+          PR_TITLE: "${{ github.event.pull_request.title || 'ACME-142: Add high_boost_filter' }}"
+          PR_BODY: "${{ github.event.pull_request.body || '' }}"
         run: python .github/scripts/trigger_cursor_review.py
 
       - name: Execute Acme Boundary Check
