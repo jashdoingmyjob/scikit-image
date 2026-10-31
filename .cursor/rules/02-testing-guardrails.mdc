@@ -1,0 +1,11 @@
+---
+description: Enforces unit test completeness and edge-case coverage before PR submission
+globs: tests/**/test_*.py, src/skimage/**/*.py
+alwaysApply: false
+---
+# Acme Pre-Review Testing Standards
+
+Every new or modified function in `skimage/<module>/<file>.py` MUST have corresponding tests in `skimage/<module>/tests/test_<file>.py` covering:
+1. **Standard 2D and 3D (multi-channel) array shapes.**
+2. **Dtype preservation:** Verify `float32` input returns `float32` output (using `_supported_float_type`).
+3. **Edge-case & invalid input handling:** Test `NaN`/`Inf` behavior, empty arrays, and `ValueError` on invalid parameter ranges.

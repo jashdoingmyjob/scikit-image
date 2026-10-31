@@ -1,0 +1,14 @@
+---
+description: Enforces strict module boundaries and prevents banned cross-package imports or secret access
+globs: **/*.py
+alwaysApply: true
+---
+# Acme Architectural & Security Boundaries
+
+1. **Strict Module Isolation:**
+   - Core modules inside `skimage/filters/` or `skimage/transform/` may ONLY import shared utilities from `skimage._shared/` or `scipy.ndimage`.
+   - NEVER import from `acme_platform/legacy_deprecated/` or `skimage/experimental/`.
+
+2. **Zero Secret / External Network Access:**
+   - Core library functions must be 100% deterministic and offline.
+   - NEVER import `os.environ`, `dotenv`, `requests`, `httpx`, or `urllib` inside `skimage/`.

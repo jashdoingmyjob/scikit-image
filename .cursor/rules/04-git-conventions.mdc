@@ -1,0 +1,10 @@
+---
+description: Git commit and Pull Request formatting conventions
+globs: *
+---
+# Git & PR Conventions
+
+Whenever generating git commit messages or GitHub CLI commands (`gh pr create`):
+1. Always extract the ticket ID (e.g., ACME-142) from the provided issue document.
+2. Prefix the commit message and PR title with the ticket ID (e.g., `ACME-142: Add high_boost_filter`).
+3. Include a brief summary of the ticket in the PR body.
