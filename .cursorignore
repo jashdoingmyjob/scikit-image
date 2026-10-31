@@ -1,0 +1,5 @@
+# Block agent from indexing or reading restricted Acme directories and secrets
+acme_platform/restricted_secrets/
+acme_platform/legacy_deprecated/
+.env*
+*.pem

@@ -1,0 +1,18 @@
+---
+description: Acme Platform conventions for scaffolding new image processing filters and transforms in scikit-image
+globs: src/skimage/**/*.py
+alwaysApply: false
+---
+# Acme Core Library Scaffolding Standards
+
+When scaffolding or modifying any function in `skimage/`:
+
+1. **Channel Axis & Dtype Normalization:**
+   - Always use `@_supported_float_type` and `channel_axis=None` decorators/arguments from `skimage._shared.utils` rather than manual `np.asarray(..., dtype=float)` conversions.
+   - Never mutate the input `image` array in-place; always operate on a validated copy.
+
+2. **Deprecation & API Contracts:**
+   - Never use raw `warnings.warn()`. Always use `@deprecate_parameter` or `warn()` from `skimage._shared.utils` with an explicit `version` and `removed_version`.
+
+3. **Docstring Contract (NumPy Standard):**
+   - Every public function must include `Parameters`, `Returns`, `Raises`, and a runnable `Examples` docstring block.

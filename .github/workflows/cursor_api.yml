@@ -1,0 +1,31 @@
+name: Acme Programmatic Cursor API Orchestrator
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+jobs:
+  cursor-api-guardrail:
+    name: "Cursor API: Dynamic Ticket & Guardrail Review"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR Branch
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Fetch Jira Context & Trigger Cursor Cloud Agent via API
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number || 1 }}
+          PR_TITLE: ${{ github.event.pull_request.title || 'ACME-142: Add high_boost_filter' }}
+          PR_BODY: ${{ github.event.pull_request.body || '' }}
+        run: python .github/scripts/trigger_cursor_review.py
+
+      - name: Execute Acme Boundary Check
+        run: python .cursor/hooks/check_boundaries.py
