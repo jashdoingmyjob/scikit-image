@@ -30,7 +30,7 @@ def trigger_cursor_cloud_agent():
         f"You are the Acme Platform Guardrail Agent reviewing PR #{pr_number} for ticket {ticket_id}.\n\n"
         f"### Dynamic Ticket Acceptance Criteria (Fetched via Jira Integration):\n{ticket_context}\n\n"
         f"### Verification Instructions:\n"
-        f"1. Run `python .cursor/hooks/check_boundaries.py` to verify architectural boundaries.\n"
+        f"1. Run `python acme_platform/ci_guardrails/check_boundaries.py` to verify architectural boundaries.\n"
         f"2. Run `pytest` on the newly added filter tests.\n"
         f"3. Verify the implementation strictly adheres to the {ticket_id} acceptance criteria above."
     )
