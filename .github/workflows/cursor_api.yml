@@ -18,7 +18,7 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Fetch Jira Context & Trigger Cursor Cloud Agent via API
+      - name: Fetch Jira Context & Trigger Cursor API
         env:
           CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
           GITHUB_REPOSITORY: ${{ github.repository }}
