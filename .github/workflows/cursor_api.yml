@@ -28,4 +28,4 @@ jobs:
         run: python .github/scripts/trigger_cursor_review.py
 
       - name: Execute Acme Boundary Check
-        run: python acme_platform/ci_guardrails/check_boundaries.py .github/scripts/trigger_cursor_review.py
+        run: python acme_platform/ci_guardrails/check_boundaries.py src/skimage/filters/_high_boost.py

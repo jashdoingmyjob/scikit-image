@@ -279,6 +279,92 @@ def test_unwrap_2d_all_masked():
     assert_(unwrap[0, 0] == 0)
 
 
+def _phase_ramp(shape):
+    coords = np.indices(shape)
+    return 0.4 * coords[0] + 0.2 * coords[-1]
+
+
+def _index(shape, offset):
+    return tuple(offset for _ in shape)
+
+
+@testing.parametrize('shape', [(8, 16), (4, 5, 6)])
+def test_unwrap_nan_does_not_mutate_c_contiguous_input(shape):
+    # C-contiguous float64 is returned as-is by np.asarray(..., order='C').
+    image = np.array(np.angle(np.exp(1j * _phase_ramp(shape))), dtype=np.float64, order='C')
+    assert_(image.flags.c_contiguous)
+    image[_index(shape, 1)] = np.nan
+    original = image.copy()
+    unwrapped = unwrap_phase(image, rng=0)
+    assert_array_equal(image, original)
+    assert_(unwrapped.shape == shape)
+    assert_(np.isfinite(unwrapped).all())
+
+
+def test_unwrap_nan_does_not_mutate_c_contiguous_view():
+    # A C-contiguous view still shares memory with its parent.
+    base = np.zeros((12, 16), dtype=np.float64)
+    view = base[:8, :]
+    assert_(view.flags.c_contiguous)
+    assert_(np.shares_memory(view, base))
+    view[1, 1] = 0.5
+    view[2, 3] = np.nan
+    before = base.copy()
+    unwrap_phase(view, rng=0)
+    assert_array_equal(base, before)
+
+    base_3d = np.zeros((6, 5, 4), dtype=np.float64)
+    view_3d = base_3d[:4, :, :]
+    assert_(view_3d.flags.c_contiguous)
+    assert_(np.shares_memory(view_3d, base_3d))
+    view_3d[1, 1, 1] = 0.25
+    view_3d[2, 2, 1] = np.nan
+    before_3d = base_3d.copy()
+    unwrap_phase(view_3d, rng=0)
+    assert_array_equal(base_3d, before_3d)
+
+
+@testing.parametrize('shape', [(8, 16), (4, 5, 6)])
+def test_unwrap_nan_and_masked_inputs_no_buffer_error(shape):
+    phase = np.angle(np.exp(1j * _phase_ramp(shape)))
+    nan_at = _index(shape, 1)
+    mask_at = _index(shape, 0)
+
+    nan_image = np.array(phase, dtype=np.float64, order='C', copy=True)
+    nan_image[nan_at] = np.nan
+    unwrapped_nan = unwrap_phase(nan_image, rng=0)
+
+    masked = np.ma.array(phase, mask=np.zeros(shape, dtype=bool))
+    masked.mask[nan_at] = True
+    unwrapped_masked = unwrap_phase(masked, rng=0)
+    assert_(np.ma.isMaskedArray(unwrapped_masked))
+    assert_(unwrapped_masked.mask[nan_at])
+    np.testing.assert_equal(np.ma.getdata(unwrapped_masked), unwrapped_nan)
+
+    # Fortran-order input: np.isnan is bool and not C-contiguous.
+    fortran = np.asfortranarray(nan_image)
+    assert_(not np.isnan(fortran).flags.c_contiguous)
+    fortran_before = np.array(fortran, copy=True, order='K')
+    unwrapped_fortran = unwrap_phase(fortran, rng=0)
+    assert_array_equal(fortran, fortran_before)
+    np.testing.assert_equal(unwrapped_fortran, unwrapped_nan)
+
+    # Masked array plus a NaN, with Fortran-ordered data and mask.
+    data_f = np.asfortranarray(phase)
+    other_nan = _index(shape, 2)
+    data_f[other_nan] = np.nan
+    mask = np.zeros(shape, dtype=bool, order='F')
+    mask[mask_at] = True
+    masked_f = np.ma.array(data_f, mask=mask)
+    data_before = np.array(np.ma.getdata(masked_f), copy=True, order='K')
+    unwrapped_both = unwrap_phase(masked_f, rng=0)
+    assert_array_equal(np.ma.getdata(masked_f), data_before)
+    assert_(np.ma.isMaskedArray(unwrapped_both))
+    assert_(unwrapped_both.mask[mask_at])
+    assert_(unwrapped_both.mask[other_nan])
+    assert_(np.isfinite(np.ma.getdata(unwrapped_both)).all())
+
+
 def test_unwrap_3d_all_masked():
     # all elements masked
     image = np.ma.zeros((10, 10, 10))
