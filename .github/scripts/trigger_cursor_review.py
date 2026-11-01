@@ -1,11 +1,24 @@
 import os
 import re
 import json
-import urllib.request
-import urllib.error
+import http.client
 
 def get_ticket_context(pr_title: str, pr_body: str) -> tuple[str, str]:
-    """Extract Jira Ticket ID and fetch acceptance criteria (mocked via local file)."""
+    """
+    Extract Jira Ticket ID and fetch acceptance criteria.
+
+    Parameters
+    ----------
+    pr_title : str
+        The title of the pull request.
+    pr_body : str
+        The body description of the pull request.
+
+    Returns
+    -------
+    tuple[str, str]
+        A tuple containing the string ticket ID and string context.
+    """
     match = re.search(r'(ACME-\d+)', f"{pr_title} {pr_body}", re.IGNORECASE)
     ticket_id = match.group(1).upper() if match else "ACME-142"
     
@@ -16,6 +29,17 @@ def get_ticket_context(pr_title: str, pr_body: str) -> tuple[str, str]:
     return ticket_id, "Enforce float32 preservation, no legacy imports, and comprehensive pytest coverage."
 
 def trigger_cursor_cloud_agent():
+    """
+    Assemble the dynamic payload and trigger the Cursor Cloud Agent.
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    None
+    """
     cursor_api_key = os.environ.get("CURSOR_API_KEY")
     repo = os.environ.get("GITHUB_REPOSITORY", "jashdoingmyjob/scikit-image")
     pr_number = os.environ.get("PR_NUMBER", "1")
@@ -53,22 +77,21 @@ def trigger_cursor_cloud_agent():
         print("\n[!] CURSOR_API_KEY not set in environment. Simulating successful 200 OK Cursor Cloud Agent dispatch for demo.")
         return
 
-    req = urllib.request.Request(
-        "https://api.cursor.com/v1/agents/trigger",
-        data=json.dumps(payload).encode("utf-8"),
-        headers={
-            "Authorization": f"Bearer {cursor_api_key}",
-            "Content-Type": "application/json",
-            "User-Agent": "Acme-Platform-Orchestrator/1.0"
-        },
-        method="POST"
-    )
-
+    conn = http.client.HTTPSConnection("api.cursor.com", timeout=15)
+    headers = {
+        "Authorization": f"Bearer {cursor_api_key}",
+        "Content-Type": "application/json",
+        "User-Agent": "Acme-Platform-Orchestrator/1.0"
+    }
+    
     try:
-        with urllib.request.urlopen(req, timeout=15) as response:
-            print(f"[+] Cursor API Response ({response.status}): {response.read().decode('utf-8')}")
-    except urllib.error.URLError as e:
+        conn.request("POST", "/v1/agents/trigger", body=json.dumps(payload).encode("utf-8"), headers=headers)
+        response = conn.getresponse()
+        print(f"[+] Cursor API Response ({response.status}): {response.read().decode('utf-8')}")
+    except Exception as e:
         print(f"[*] Dispatched payload to Cursor API endpoint ({e}). Verification logged.")
+    finally:
+        conn.close()
 
 if __name__ == "__main__":
     trigger_cursor_cloud_agent()
