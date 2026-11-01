@@ -16,3 +16,7 @@ When scaffolding or modifying any function in `skimage/`:
 
 3. **Docstring Contract (NumPy Standard):**
    - Every public function must include `Parameters`, `Returns`, `Raises`, and a runnable `Examples` docstring block.
+
+When scaffolding a new filter, you MUST add the module to `src/skimage/filters/meson.build`
+
+Ensure any masks passed to `unwrap_phase` are strictly C-contiguous `uint8` arrays, and do not overwrite NaNs in the input array.
