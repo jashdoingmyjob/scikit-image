@@ -18,6 +18,15 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Execute Acme Boundary Check
+        run: python acme_platform/ci_guardrails/check_boundaries.py src/skimage/filters/_high_boost.py
+
+      - name: Execute Unit Tests
+        run: |
+          pip install pytest numpy
+          # Run tests explicitly on the new feature to avoid a 15-minute full scikit-image C-compilation
+          pytest src/skimage/filters/tests/ -v || echo "Tests executed. Skipping strict failure for demo compilation limits."
+
       - name: Fetch Jira Context & Trigger Cursor API
         env:
           CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
@@ -28,12 +37,3 @@ jobs:
         run: |
           pip install requests
           python .github/scripts/trigger_cursor_review.py
-
-      - name: Execute Acme Boundary Check
-        run: python acme_platform/ci_guardrails/check_boundaries.py src/skimage/filters/_high_boost.py
-
-      - name: Execute Unit Tests
-        run: |
-          pip install pytest numpy
-          # Run tests explicitly on the new feature to avoid a 15-minute full scikit-image C-compilation
-          pytest src/skimage/filters/tests/ -v || echo "Tests executed. Skipping strict failure for demo compilation limits."
