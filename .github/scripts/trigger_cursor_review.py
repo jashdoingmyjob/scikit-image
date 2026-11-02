@@ -29,6 +29,13 @@ def get_ticket_context(pr_title: str, pr_body: str) -> tuple[str, str]:
             return ticket_id, f.read()
     return ticket_id, "Enforce float32 preservation, no legacy imports, and comprehensive pytest coverage."
 
+def _github_repo_url(repository: str) -> str:
+    """Return an https GitHub URL for an owner/name or existing URL."""
+    repository = repository.strip().rstrip("/")
+    if repository.startswith(("https://", "http://")):
+        return repository
+    return f"https://github.com/{repository}"
+
 def trigger_cursor_cloud_agent():
     """
     Assemble the dynamic payload and trigger the Cursor Cloud Agent.
@@ -60,9 +67,16 @@ def trigger_cursor_cloud_agent():
         f"3. Verify the implementation strictly adheres to the {ticket_id} acceptance criteria above."
     )
 
+    repo_url = _github_repo_url(repo)
+    repo_entry = {"url": repo_url}
+    if pr_number:
+        repo_entry["prUrl"] = f"{repo_url}/pull/{pr_number}"
+
+    # prompt.text must be an object field. A bare string is a 400 validation_error.
+    # POST /v1/agents returns 201 when the agent is created.
     payload = {
-        "repository": repo,
-        "prompt": dynamic_prompt,
+        "prompt": {"text": dynamic_prompt},
+        "repos": [repo_entry],
     }
 
     print("\n[*] Assembled Enriched Cursor API Payload:")
@@ -96,6 +110,11 @@ def trigger_cursor_cloud_agent():
         print("[!] Cursor API returned 403 (unauthorized or insufficient permissions).")
         print(json.dumps(response_body, indent=2))
         return
+
+    if response.status_code != 201:
+        print(f"[!] Cursor API returned {response.status_code}.")
+        print(json.dumps(response_body, indent=2))
+        raise SystemExit(1)
 
     print(f"[+] Cursor API Response ({response.status_code}):")
     print(json.dumps(response_body, indent=2))
