@@ -1,7 +1,8 @@
 import os
 import re
 import json
-import http.client
+
+import requests
 
 def get_ticket_context(pr_title: str, pr_body: str) -> tuple[str, str]:
     """
@@ -61,13 +62,7 @@ def trigger_cursor_cloud_agent():
 
     payload = {
         "repository": repo,
-        "pull_request_number": int(pr_number),
-        "agent_type": "pr_review_guardrail",
         "prompt": dynamic_prompt,
-        "metadata": {
-            "ticket_id": ticket_id,
-            "orchestrator": "github_actions_cursor_api"
-        }
     }
 
     print("\n[*] Assembled Enriched Cursor API Payload:")
@@ -77,21 +72,33 @@ def trigger_cursor_cloud_agent():
         print("\n[!] CURSOR_API_KEY not set in environment. Simulating successful 200 OK Cursor Cloud Agent dispatch for demo.")
         return
 
-    conn = http.client.HTTPSConnection("api.cursor.com", timeout=15)
-    headers = {
-        "Authorization": f"Bearer {cursor_api_key}",
-        "Content-Type": "application/json",
-        "User-Agent": "Acme-Platform-Orchestrator/1.0"
-    }
-    
     try:
-        conn.request("POST", "/v1/agents/trigger", body=json.dumps(payload).encode("utf-8"), headers=headers)
-        response = conn.getresponse()
-        print(f"[+] Cursor API Response ({response.status}): {response.read().decode('utf-8')}")
-    except Exception as e:
-        print(f"[*] Dispatched payload to Cursor API endpoint ({e}). Verification logged.")
-    finally:
-        conn.close()
+        response = requests.post(
+            "https://api.cursor.com/v1/agents",
+            headers={
+                "Authorization": f"Bearer {cursor_api_key}",
+                "Content-Type": "application/json",
+                "User-Agent": "Acme-Platform-Orchestrator/1.0",
+            },
+            json=payload,
+            timeout=15,
+        )
+    except requests.RequestException as exc:
+        print(f"[*] Failed to reach Cursor API ({exc}). Verification logged.")
+        return
+
+    try:
+        response_body = response.json()
+    except ValueError:
+        response_body = {"raw": response.text}
+
+    if response.status_code == 403:
+        print("[!] Cursor API returned 403 (unauthorized or insufficient permissions).")
+        print(json.dumps(response_body, indent=2))
+        return
+
+    print(f"[+] Cursor API Response ({response.status_code}):")
+    print(json.dumps(response_body, indent=2))
 
 if __name__ == "__main__":
     trigger_cursor_cloud_agent()
