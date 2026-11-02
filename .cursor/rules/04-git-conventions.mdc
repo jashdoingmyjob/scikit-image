@@ -1,6 +1,7 @@
 ---
 description: Git commit and Pull Request formatting conventions
 globs: *
+alwaysApply: false
 ---
 # Git & PR Conventions
 
