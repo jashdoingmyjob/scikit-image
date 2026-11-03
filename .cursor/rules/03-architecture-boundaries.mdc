@@ -1,7 +1,7 @@
 ---
 description: Enforces strict module boundaries and prevents banned cross-package imports or secret access
 globs: **/*.py
-alwaysApply: true
+alwaysApply: false
 ---
 # Acme Architectural & Security Boundaries
 
