@@ -3,7 +3,7 @@ description: Acme Platform conventions for scaffolding new image processing filt
 globs: src/skimage/**/*.py
 alwaysApply: false
 ---
-# Acme Core Library Scaffolding Standards
+# Acme Core Library Scaffolding Standards. We restrict this to core library files so the AI doesn't hallucinate skimage decorators into test files or scripts, and keep it probabilistic to save tokens when doing unrelated tasks.
 
 When scaffolding or modifying any function in `skimage/`:
 
@@ -20,3 +20,4 @@ When scaffolding or modifying any function in `skimage/`:
 When scaffolding a new filter, you MUST add the module to `src/skimage/filters/meson.build`
 
 Ensure any masks passed to `unwrap_phase` are strictly C-contiguous `uint8` arrays, and do not overwrite NaNs in the input array.
+

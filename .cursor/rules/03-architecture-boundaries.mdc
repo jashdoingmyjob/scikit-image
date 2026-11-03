@@ -3,7 +3,7 @@ description: Enforces strict module boundaries and prevents banned cross-package
 globs: **/*.py
 alwaysApply: false
 ---
-# Acme Architectural & Security Boundaries
+# Acme Architectural & Security Boundaries. We target every Python file to strictly enforce import bans across the entire codebase, but avoid alwaysApply: true so we don't inject Python architecture rules when editing YAML or Markdown
 
 1. **Strict Module Isolation:**
    - Core modules inside `skimage/filters/` or `skimage/transform/` may ONLY import shared utilities from `skimage._shared/` or `scipy.ndimage`.

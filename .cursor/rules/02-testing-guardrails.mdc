@@ -3,7 +3,7 @@ description: Enforces unit test completeness and edge-case coverage before PR su
 globs: tests/**/test_*.py, src/skimage/**/*.py
 alwaysApply: false
 ---
-# Acme Pre-Review Testing Standards
+# Acme Pre-Review Testing Standards. We scope this to both source and test directories so the AI knows the testing rubric while writing either, but leave it probabilistic to avoid wasting tokens when editing documentation or CI pipelines
 
 Every new or modified function in `skimage/<module>/<file>.py` MUST have corresponding tests in `skimage/<module>/tests/test_<file>.py` covering:
 1. **Standard 2D and 3D (multi-channel) array shapes.**

@@ -3,7 +3,7 @@ description: Git commit and Pull Request formatting conventions
 globs: *
 alwaysApply: false
 ---
-# Git & PR Conventions
+# Git & PR Conventions. We use a universal glob because version control happens regardless of the file extension being edited, but keep it probabilistic so it only loads when the prompt explicitly mentions commits or PRs.
 
 Whenever generating git commit messages or GitHub CLI commands (`gh pr create`):
 1. Always extract the ticket ID (e.g., ACME-142) from the provided issue document.
