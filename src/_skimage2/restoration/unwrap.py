@@ -20,7 +20,10 @@ def unwrap_phase(image, wrap_around=False, rng=None):
         provided, the masked entries will not be changed, and their values
         will not be used to guide the unwrapping of neighboring, unmasked
         values. Masked 1D arrays are not allowed, and will raise a
-        `ValueError`.
+        `ValueError`.  NaN values in the image form an implicit mask.  We
+        combine this implicit mask with any mask from a masked array, with
+        logical OR.  The output values under the resulting mask are set to the
+        minimum of the unwrapped phase.
     wrap_around : bool or sequence of bool, optional
         When an element of the sequence is  `True`, the unwrapping process
         will regard the edges along the corresponding axis of the image to be
@@ -96,9 +99,19 @@ def unwrap_phase(image, wrap_around=False, rng=None):
             '`wrap_around` must be a bool or a sequence with '
             'length equal to the dimensionality of image'
         )
+
+    # NaNs form an implicit mask. ``np.isnan`` is a bool array and may be
+    # non-contiguous; masked-array masks have the same problem. ``unwrap_2d``
+    # and ``unwrap_3d`` require a C-contiguous uint8 mask (1 = masked).
+    data = np.ma.getdata(image)
+    nan_mask = np.isnan(data)
+    any_nans = bool(np.any(nan_mask))
+
     if image.ndim == 1:
         if np.ma.isMaskedArray(image):
             raise ValueError('1D masked images cannot be unwrapped')
+        if any_nans:
+            raise ValueError('1D images with NaNs cannot be unwrapped')
         if wrap_around[0]:
             raise ValueError('`wrap_around` is not supported for 1D images')
     if image.ndim in (2, 3) and 1 in image.shape:
@@ -112,11 +125,19 @@ def unwrap_phase(image, wrap_around=False, rng=None):
         rng = np.random.default_rng(rng)
 
     if np.ma.isMaskedArray(image):
-        mask = np.require(np.ma.getmaskarray(image), np.uint8, ['C'])
+        combined_mask = np.logical_or(nan_mask, np.ma.getmaskarray(image))
     else:
-        mask = np.zeros_like(image, dtype=np.uint8, order='C')
+        combined_mask = nan_mask
+    mask = np.require(combined_mask, np.uint8, ['C'])
 
-    image_not_masked = np.asarray(np.ma.getdata(image), dtype=np.float64, order='C')
+    # ``np.asarray(..., order='C')`` returns the original array when it is
+    # already C-contiguous float64. Zero NaNs only on a private copy so the
+    # caller's array is never written.
+    image_not_masked = np.asarray(data, dtype=np.float64, order='C')
+    if any_nans:
+        if np.shares_memory(image_not_masked, data):
+            image_not_masked = image_not_masked.copy()
+        image_not_masked[nan_mask] = 0
     image_unwrapped = np.empty_like(image, dtype=np.float64, order='C', subok=False)
 
     if image.ndim == 1:
