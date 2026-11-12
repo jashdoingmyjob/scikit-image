@@ -4,6 +4,7 @@ python_sources = [
   '_fft_based.py',
   '_gabor.py',
   '_gaussian.py',
+  '_high_boost.py',
   '_median.py',
   '_rank_order.py',
   '_sparse.py',
