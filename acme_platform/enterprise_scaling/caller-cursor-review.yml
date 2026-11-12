@@ -1,0 +1,18 @@
+# Dropped into any existing or new Acme repository (.github/workflows/caller-cursor-review.yml)
+# Delegates orchestration to Acme's centralized DevOps workflow so teams don't duplicate logic.
+name: Acme Governed SDLC Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  governed-pr-pipeline:
+    uses: acme-org/engineering-workflows/.github/workflows/reusable-cursor-review.yml@v1
+    with:
+      python-version: "3.11"
+      boundary-script-path: "./scripts/check_boundaries.py"
+      jira-project-key: "ACME"
+    # No secrets are stored in team repos. The Jira role and Cursor API key are
+    # org-level secrets owned by DevOps and passed through to the central workflow.
+    secrets: inherit
